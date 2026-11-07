@@ -1,50 +1,69 @@
 /* =========================================
-   OPEN INVITATION
+   MUSIC
+   Browsers (especially iOS Safari) block autoplay until the
+   visitor interacts with the page, so we try to autoplay, and
+   if blocked, start on the first tap / click / key press.
 ========================================= */
 
-const openInvitation = document.getElementById("openInvitation");
-const openingScreen = document.getElementById("openingScreen");
 const weddingMusic = document.getElementById("weddingMusic");
 const musicBtn = document.getElementById("musicBtn");
 
-if (openInvitation && openingScreen) {
+function startMusic() {
+    if (!weddingMusic) return Promise.resolve(false);
 
-    openInvitation.addEventListener("click", () => {
+    try {
+        const attempt = weddingMusic.play();
 
-        // Hide landing page
-        openingScreen.classList.add("hidden");
-
-        // Enable scrolling on main invitation
-        document.body.classList.add("invitation-open");
-
-        // Start wedding music
-        if (weddingMusic) {
-
-            weddingMusic.play()
+        if (attempt && typeof attempt.then === "function") {
+            return attempt
                 .then(() => {
-                    if (musicBtn) {
-                        musicBtn.classList.add("playing");
-                    }
+                    if (musicBtn) musicBtn.classList.add("playing");
+                    return true;
                 })
-                .catch(() => {
-                    console.log("Music could not start.");
-                });
+                .catch(() => false);
         }
 
-    });
-
+        // Very old browsers: play() returns nothing
+        if (musicBtn) musicBtn.classList.add("playing");
+        return Promise.resolve(true);
+    } catch (error) {
+        return Promise.resolve(false);
+    }
 }
 
-/* =========================================
-   MUSIC TOGGLE
-========================================= */
+const unlockEvents = ["touchend", "pointerup", "click", "keydown"];
+
+function unlockMusic(event) {
+    // Let the music button handle its own taps
+    if (event && event.target && event.target.closest && event.target.closest("#musicBtn")) {
+        return;
+    }
+
+    startMusic().then((started) => {
+        if (started) {
+            unlockEvents.forEach((type) => {
+                document.removeEventListener(type, unlockMusic);
+            });
+        }
+    });
+}
+
+if (weddingMusic) {
+    // 1) Try to autoplay straight away (works on some desktop browsers)
+    startMusic().then((started) => {
+        // 2) Otherwise wait for the first real user gesture
+        if (!started) {
+            unlockEvents.forEach((type) => {
+                document.addEventListener(type, unlockMusic, { passive: true });
+            });
+        }
+    });
+}
 
 if (musicBtn && weddingMusic) {
     musicBtn.addEventListener("click", () => {
         if (weddingMusic.paused) {
-            weddingMusic.play()
-                .then(() => musicBtn.classList.add("playing"))
-                .catch(() => console.log("Music could not start."));
+            startMusic();
         } else {
             weddingMusic.pause();
             musicBtn.classList.remove("playing");
@@ -119,7 +138,7 @@ if ("IntersectionObserver" in window) {
             });
         },
         {
-            threshold: 0.15
+            threshold: 0.05
         }
     );
 
