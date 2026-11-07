@@ -1104,3 +1104,84 @@ footer.show {
     opacity: 1;
     transform: translateY(0);
 }
+/* =========================================
+   MOBILE OPENING SCREEN SCROLL FIX
+========================================= */
+
+/* Prevent background page from scrolling initially */
+body {
+    overflow: hidden;
+}
+
+/* Make landing screen independently scrollable */
+.opening-screen {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
+    touch-action: pan-y;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure opening content has enough room */
+.opening-content {
+    width: 100%;
+    max-width: 650px;
+
+    margin: auto;
+    padding: 45px 25px;
+    flex-shrink: 0;
+}
+
+/* Allow scrolling on smaller mobile screens */
+@media (max-width: 600px) {
+
+    .opening-screen {
+        align-items: flex-start;
+    }
+
+    .opening-content {
+        margin: auto;
+        padding: 65px 22px 45px;
+    }
+
+    .opening-content h1 {
+        font-size: clamp(42px, 11vw, 65px);
+        line-height: 0.95;
+    }
+
+    .opening-content .bismillah {
+        font-size: 18px;
+    }
+
+    .opening-content .invitation-text {
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .opening-content .euphoria-script {
+        font-size: 25px;
+    }
+
+    .open-btn {
+        margin-bottom: 15px;
+    }
+}
+
+/* Restore scrolling after opening invitation */
+body.invitation-open {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
