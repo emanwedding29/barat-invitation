@@ -14,6 +14,19 @@
     --muted: #80676a;
 }
 @font-face {
+    font-family: 'Dancing Script';
+    src: url('./fonts/dancing/DancingScript-VariableFont_wght.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+.dancing-script {
+    font-family: 'Dancing Script', cursive;
+    font-size: 32px;
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-transform: none;
+}
+@font-face {
     font-family: 'Alex Brush';
     src: url('./fonts/AlexBrush-Regular.ttf') format('truetype');
     font-weight: normal;
@@ -1171,8 +1184,8 @@ body {
         line-height: 1.8;
     }
 
-    .opening-content .euphoria-script .h1 {
-        font-size: 42px;
+    .opening-content .dancing-script .h1 {
+        font-size: 30px;
     }
 
     .open-btn {
@@ -1184,4 +1197,21 @@ body {
 body.invitation-open {
     overflow-x: hidden;
     overflow-y: auto;
+}
+/* Prevent mobile Safari from changing text appearance */
+@media (max-width: 600px) {
+
+    .opening-content h1,
+    .opening-content h1 span {
+        -webkit-text-size-adjust: none;
+        text-size-adjust: none;
+        -webkit-tap-highlight-color: transparent;
+        transform: none;
+    }
+
+    .opening-content h1 {
+        font-size: 52px !important;
+        line-height: 1.05 !important;
+    }
+
 }
