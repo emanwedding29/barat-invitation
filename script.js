@@ -1,87 +1,59 @@
 /* =========================================
-   MUSIC
-   Phones block audio with sound until the visitor touches the
-   page. So we: (1) try to play with sound, (2) if blocked, play
-   MUTED (always allowed) and (3) unmute on the first touch/tap.
+   OPEN INVITATION + MUSIC
+   Music starts inside the button's click handler, which is a real
+   tap, so iPhones and Androids both allow it.
 ========================================= */
 
+const openInvitation = document.getElementById("openInvitation");
+const openingScreen = document.getElementById("openingScreen");
 const weddingMusic = document.getElementById("weddingMusic");
 const musicBtn = document.getElementById("musicBtn");
 
-function setPlayingState(on) {
-    if (!musicBtn) return;
-    musicBtn.classList.toggle("playing", on);
-}
+function startMusic() {
+    if (!weddingMusic) return;
 
-function isAudible() {
-    return weddingMusic && !weddingMusic.paused && !weddingMusic.muted;
-}
-
-function playWithSound() {
     weddingMusic.muted = false;
+
     try {
-        const p = weddingMusic.play();
-        if (p && typeof p.then === "function") {
-            return p.then(() => true).catch(() => false);
+        const attempt = weddingMusic.play();
+
+        if (attempt && typeof attempt.then === "function") {
+            attempt
+                .then(() => {
+                    if (musicBtn) musicBtn.classList.add("playing");
+                })
+                .catch(() => {
+                    console.log("Music could not start.");
+                });
+        } else if (musicBtn) {
+            musicBtn.classList.add("playing");
         }
-        return Promise.resolve(true);
-    } catch (e) {
-        return Promise.resolve(false);
+    } catch (error) {
+        console.log("Music could not start.");
     }
 }
 
-const unlockEvents = ["touchend", "pointerup", "click", "keydown", "wheel"];
+if (openInvitation && openingScreen) {
+    openInvitation.addEventListener("click", () => {
+        // Start music first, directly inside the tap
+        startMusic();
 
-function removeUnlockListeners() {
-    unlockEvents.forEach((type) => {
-        document.removeEventListener(type, unlockMusic);
-    });
-}
+        // Show the main invitation
+        document.body.classList.remove("locked");
+        window.scrollTo(0, 0);
 
-function unlockMusic(event) {
-    // The music button handles its own taps
-    if (event && event.target && event.target.closest && event.target.closest("#musicBtn")) {
-        return;
-    }
-
-    playWithSound().then((ok) => {
-        if (ok && isAudible()) {
-            setPlayingState(true);
-            removeUnlockListeners();
-        }
-    });
-}
-
-if (weddingMusic) {
-    playWithSound().then((ok) => {
-        if (ok) {
-            setPlayingState(true);
-            return;
-        }
-
-        // Blocked: start silently so the first touch only has to unmute
-        weddingMusic.muted = true;
-        const p = weddingMusic.play();
-        if (p && typeof p.catch === "function") {
-            p.catch(() => {});
-        }
-
-        unlockEvents.forEach((type) => {
-            document.addEventListener(type, unlockMusic, { passive: true });
-        });
+        // Fade out the opening screen
+        openingScreen.classList.add("hidden");
     });
 }
 
 if (musicBtn && weddingMusic) {
     musicBtn.addEventListener("click", () => {
-        if (isAudible()) {
-            weddingMusic.pause();
-            setPlayingState(false);
+        if (weddingMusic.paused) {
+            startMusic();
         } else {
-            playWithSound().then((ok) => {
-                setPlayingState(ok);
-                if (ok) removeUnlockListeners();
-            });
+            weddingMusic.pause();
+            musicBtn.classList.remove("playing");
         }
     });
 }
