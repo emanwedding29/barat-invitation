@@ -1158,7 +1158,7 @@ body {
     }
 
     .opening-content h1 {
-        font-size: clamp(42px, 11vw, 65px);
+        font-size: clamp(42px, 12.5vw, 72px);
         line-height: 0.95;
     }
 
