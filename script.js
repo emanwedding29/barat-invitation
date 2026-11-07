@@ -8,19 +8,31 @@ const weddingMusic = document.getElementById("weddingMusic");
 const musicBtn = document.getElementById("musicBtn");
 
 if (openInvitation && openingScreen) {
+
     openInvitation.addEventListener("click", () => {
+
+        // Hide landing page
         openingScreen.classList.add("hidden");
 
+        // Enable scrolling on main invitation
+        document.body.classList.add("invitation-open");
+
+        // Start wedding music
         if (weddingMusic) {
+
             weddingMusic.play()
                 .then(() => {
-                    if (musicBtn) musicBtn.classList.add("playing");
+                    if (musicBtn) {
+                        musicBtn.classList.add("playing");
+                    }
                 })
                 .catch(() => {
                     console.log("Music could not start.");
                 });
         }
+
     });
+
 }
 
 /* =========================================
