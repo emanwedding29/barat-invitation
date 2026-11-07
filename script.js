@@ -1,72 +1,87 @@
 /* =========================================
    MUSIC
-   Browsers (especially iOS Safari) block autoplay until the
-   visitor interacts with the page, so we try to autoplay, and
-   if blocked, start on the first tap / click / key press.
+   Phones block audio with sound until the visitor touches the
+   page. So we: (1) try to play with sound, (2) if blocked, play
+   MUTED (always allowed) and (3) unmute on the first touch/tap.
 ========================================= */
 
 const weddingMusic = document.getElementById("weddingMusic");
 const musicBtn = document.getElementById("musicBtn");
 
-function startMusic() {
-    if (!weddingMusic) return Promise.resolve(false);
+function setPlayingState(on) {
+    if (!musicBtn) return;
+    musicBtn.classList.toggle("playing", on);
+}
 
+function isAudible() {
+    return weddingMusic && !weddingMusic.paused && !weddingMusic.muted;
+}
+
+function playWithSound() {
+    weddingMusic.muted = false;
     try {
-        const attempt = weddingMusic.play();
-
-        if (attempt && typeof attempt.then === "function") {
-            return attempt
-                .then(() => {
-                    if (musicBtn) musicBtn.classList.add("playing");
-                    return true;
-                })
-                .catch(() => false);
+        const p = weddingMusic.play();
+        if (p && typeof p.then === "function") {
+            return p.then(() => true).catch(() => false);
         }
-
-        // Very old browsers: play() returns nothing
-        if (musicBtn) musicBtn.classList.add("playing");
         return Promise.resolve(true);
-    } catch (error) {
+    } catch (e) {
         return Promise.resolve(false);
     }
 }
 
-const unlockEvents = ["touchend", "pointerup", "click", "keydown"];
+const unlockEvents = ["touchend", "pointerup", "click", "keydown", "wheel"];
+
+function removeUnlockListeners() {
+    unlockEvents.forEach((type) => {
+        document.removeEventListener(type, unlockMusic);
+    });
+}
 
 function unlockMusic(event) {
-    // Let the music button handle its own taps
+    // The music button handles its own taps
     if (event && event.target && event.target.closest && event.target.closest("#musicBtn")) {
         return;
     }
 
-    startMusic().then((started) => {
-        if (started) {
-            unlockEvents.forEach((type) => {
-                document.removeEventListener(type, unlockMusic);
-            });
+    playWithSound().then((ok) => {
+        if (ok && isAudible()) {
+            setPlayingState(true);
+            removeUnlockListeners();
         }
     });
 }
 
 if (weddingMusic) {
-    // 1) Try to autoplay straight away (works on some desktop browsers)
-    startMusic().then((started) => {
-        // 2) Otherwise wait for the first real user gesture
-        if (!started) {
-            unlockEvents.forEach((type) => {
-                document.addEventListener(type, unlockMusic, { passive: true });
-            });
+    playWithSound().then((ok) => {
+        if (ok) {
+            setPlayingState(true);
+            return;
         }
+
+        // Blocked: start silently so the first touch only has to unmute
+        weddingMusic.muted = true;
+        const p = weddingMusic.play();
+        if (p && typeof p.catch === "function") {
+            p.catch(() => {});
+        }
+
+        unlockEvents.forEach((type) => {
+            document.addEventListener(type, unlockMusic, { passive: true });
+        });
     });
 }
 
 if (musicBtn && weddingMusic) {
     musicBtn.addEventListener("click", () => {
-        if (weddingMusic.paused) {
-            startMusic();
-        } else {
+        if (isAudible()) {
             weddingMusic.pause();
-            musicBtn.classList.remove("playing");
+            setPlayingState(false);
+        } else {
+            playWithSound().then((ok) => {
+                setPlayingState(ok);
+                if (ok) removeUnlockListeners();
+            });
         }
     });
 }
